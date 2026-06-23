@@ -12,6 +12,8 @@ namespace MonitorSwitcher
 
         private const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
         private const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
+        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        private const int DWMWCP_ROUND = 2;
 
         public TrayUI()
         {
@@ -25,6 +27,10 @@ namespace MonitorSwitcher
             var interopHelper = new System.Windows.Interop.WindowInteropHelper(this);
             int backdropType = DWMSBT_TRANSIENTWINDOW;
             DwmSetWindowAttribute(interopHelper.Handle, DWMWA_SYSTEMBACKDROP_TYPE, ref backdropType, sizeof(int));
+            
+            // Enable native rounded corners
+            int cornerPref = DWMWCP_ROUND;
+            DwmSetWindowAttribute(interopHelper.Handle, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPref, sizeof(int));
         }
 
         public void RefreshProfiles()

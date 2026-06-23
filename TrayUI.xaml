@@ -29,7 +29,7 @@
         </Style>
     </Window.Resources>
     
-    <Border x:Name="MainBorder" CornerRadius="10" Background="#B21E1E1E" BorderBrush="#55FFFFFF" BorderThickness="1" Margin="10">
+    <Border x:Name="MainBorder" Background="#B21E1E1E" BorderBrush="#55FFFFFF" BorderThickness="1" Margin="0">
         <!-- Inner shadow / Blur is achieved by background opacity and DWM Acrylic -->
         <Grid Margin="15">
             <Grid.RowDefinitions>
