@@ -122,7 +122,16 @@ namespace MonitorSwitcher
             System.Windows.Controls.StackPanel panel = new System.Windows.Controls.StackPanel() { Margin = new Thickness(15) };
             
             System.Windows.Controls.TextBox textBox = new System.Windows.Controls.TextBox() { Text = defaultText, Margin = new Thickness(0,0,0,15), Padding = new Thickness(5), FontSize = 14 };
-            System.Windows.Controls.Button btnOk = new System.Windows.Controls.Button() { Content = "OK", Width = 80, HorizontalAlignment = System.Windows.HorizontalAlignment.Right, Padding = new Thickness(5) };
+            System.Windows.Controls.Button btnOk = new System.Windows.Controls.Button() 
+            { 
+                Content = "OK", 
+                Width = 80, 
+                Height = 30, 
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right, 
+                Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60)), 
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0)
+            };
             btnOk.Click += (s,e) => prompt.DialogResult = true;
             
             panel.Children.Add(new System.Windows.Controls.TextBlock() { Text = "Enter profile name:", Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White), Margin = new Thickness(0,0,0,5) });
