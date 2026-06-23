@@ -13,3 +13,7 @@ D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\refint\MonitorSwitcher
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\MonitorSwitcher.pdb
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\MonitorSwitcher.genruntimeconfig.cache
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\ref\MonitorSwitcher.dll
+D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\TrayUI.baml
+D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\TrayUI.g.cs
+D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\MonitorSwitcher_MarkupCompile.cache
+D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0-windows\MonitorSwitcher.g.resources

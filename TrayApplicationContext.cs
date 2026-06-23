@@ -1,118 +1,104 @@
 using System;
-using System.IO;
-using System.Windows.Forms;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace MonitorSwitcher;
 
 public class TrayApplicationContext : ApplicationContext
 {
     private NotifyIcon trayIcon;
-    private ContextMenuStrip contextMenu;
+    private TrayUI trayUI;
 
     public TrayApplicationContext()
     {
-        contextMenu = new ContextMenuStrip();
-        BuildMenu();
+        // Initialize WPF within WinForms app
+        if (System.Windows.Application.Current == null)
+        {
+            new System.Windows.Application();
+        }
+
+        trayUI = new TrayUI();
 
         trayIcon = new NotifyIcon()
         {
-            Icon = SystemIcons.Application,
-            ContextMenuStrip = contextMenu,
+            Icon = CreateMonitorIcon(),
             Visible = true,
             Text = "Monitor Switcher"
         };
+
+        trayIcon.MouseClick += TrayIcon_MouseClick;
     }
 
-    private void BuildMenu()
+    private void TrayIcon_MouseClick(object? sender, MouseEventArgs e)
     {
-        contextMenu.Items.Clear();
-
-        // Title
-        ToolStripMenuItem titleItem = new ToolStripMenuItem("Monitor Switcher") { Enabled = false };
-        contextMenu.Items.Add(titleItem);
-        contextMenu.Items.Add(new ToolStripSeparator());
-
-        // Load configs from current directory
-        string[] configFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.config");
-        if (configFiles.Length > 0)
+        if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
         {
-            foreach (string file in configFiles)
+            if (trayUI.IsVisible)
             {
-                string profileName = Path.GetFileNameWithoutExtension(file);
-                ToolStripMenuItem profileItem = new ToolStripMenuItem(profileName, null, (s, e) => LoadProfile(profileName));
-                contextMenu.Items.Add(profileItem);
+                trayUI.Hide();
             }
-            contextMenu.Items.Add(new ToolStripSeparator());
-        }
-
-        // Save Current Profile
-        contextMenu.Items.Add(new ToolStripMenuItem("Save Current Profile...", null, SaveProfile));
-
-        // Refresh Menu
-        contextMenu.Items.Add(new ToolStripMenuItem("Refresh List", null, (s, e) => BuildMenu()));
-        
-        contextMenu.Items.Add(new ToolStripSeparator());
-
-        // Exit
-        contextMenu.Items.Add(new ToolStripMenuItem("Exit", null, Exit));
-    }
-
-    private void LoadProfile(string profileName)
-    {
-        try
-        {
-            string profilePath = Path.Combine(Directory.GetCurrentDirectory(), profileName + ".config");
-            DisplayManager.LoadProfile(profilePath);
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error loading profile: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    private void SaveProfile(object? sender, EventArgs e)
-    {
-        Form prompt = new Form()
-        {
-            Width = 300,
-            Height = 150,
-            FormBorderStyle = FormBorderStyle.FixedDialog,
-            Text = "Save Profile",
-            StartPosition = FormStartPosition.CenterScreen,
-            TopMost = true
-        };
-        Label textLabel = new Label() { Left = 20, Top = 20, Text = "Enter profile name:" };
-        TextBox inputBox = new TextBox() { Left = 20, Top = 50, Width = 240 };
-        Button confirmation = new Button() { Text = "Save", Left = 160, Width = 100, Top = 80, DialogResult = DialogResult.OK };
-        
-        prompt.Controls.Add(textLabel);
-        prompt.Controls.Add(inputBox);
-        prompt.Controls.Add(confirmation);
-        prompt.AcceptButton = confirmation;
-
-        if (prompt.ShowDialog() == DialogResult.OK)
-        {
-            string profileName = inputBox.Text.Trim();
-            if (!string.IsNullOrEmpty(profileName))
+            else
             {
-                try
-                {
-                    string profilePath = Path.Combine(Directory.GetCurrentDirectory(), profileName + ".config");
-                    DisplayManager.SaveProfile(profilePath);
-                    BuildMenu(); // Refresh menu
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error saving profile: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                trayUI.RefreshProfiles();
+                
+                // Position the window near the tray
+                var cursorPosition = Cursor.Position;
+                var screen = Screen.FromPoint(cursorPosition);
+                
+                trayUI.Left = screen.WorkingArea.Right - trayUI.Width - 10;
+                trayUI.Top = screen.WorkingArea.Bottom - trayUI.Height - 10;
+                
+                trayUI.Show();
+                trayUI.Activate();
             }
         }
     }
 
-    private void Exit(object? sender, EventArgs e)
+    private Icon CreateMonitorIcon()
     {
-        trayIcon.Visible = false;
-        Application.Exit();
+        int size = 32;
+        Bitmap bmp = new Bitmap(size, size);
+        using (Graphics g = Graphics.FromImage(bmp))
+        {
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            g.Clear(Color.Transparent);
+
+            // Draw monitor bezel
+            using (Brush bezelBrush = new SolidBrush(Color.White))
+            {
+                g.FillRoundedRectangle(bezelBrush, 2, 4, 28, 18, 2);
+            }
+
+            // Draw monitor screen
+            using (Brush screenBrush = new SolidBrush(Color.Black))
+            {
+                g.FillRectangle(screenBrush, 4, 6, 24, 14);
+            }
+
+            // Draw stand and base
+            using (Brush standBrush = new SolidBrush(Color.LightGray))
+            {
+                g.FillRectangle(standBrush, 14, 22, 4, 6); // stand
+                g.FillRoundedRectangle(standBrush, 8, 28, 16, 2, 1); // base
+            }
+        }
+
+        IntPtr hIcon = bmp.GetHicon();
+        return Icon.FromHandle(hIcon);
+    }
+}
+
+// Extension method to draw rounded rectangle for the icon
+public static class GraphicsExtension
+{
+    public static void FillRoundedRectangle(this Graphics g, Brush brush, float x, float y, float width, float height, float radius)
+    {
+        System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+        path.AddArc(x, y, radius * 2, radius * 2, 180, 90);
+        path.AddArc(x + width - (radius * 2), y, radius * 2, radius * 2, 270, 90);
+        path.AddArc(x + width - (radius * 2), y + height - (radius * 2), radius * 2, radius * 2, 0, 90);
+        path.AddArc(x, y + height - (radius * 2), radius * 2, radius * 2, 90, 90);
+        path.CloseFigure();
+        g.FillPath(brush, path);
     }
 }
