@@ -1,0 +1,7 @@
+D:\YRJ Developer\MonitorSwitcher\publish\MonitorSwitcher.pdb
+D:\YRJ Developer\MonitorSwitcher\publish\D3DCompiler_47_cor3.dll
+D:\YRJ Developer\MonitorSwitcher\publish\PenImc_cor3.dll
+D:\YRJ Developer\MonitorSwitcher\publish\PresentationNative_cor3.dll
+D:\YRJ Developer\MonitorSwitcher\publish\vcruntime140_cor3.dll
+D:\YRJ Developer\MonitorSwitcher\publish\wpfgfx_cor3.dll
+D:\YRJ Developer\MonitorSwitcher\publish\MonitorSwitcher.exe
