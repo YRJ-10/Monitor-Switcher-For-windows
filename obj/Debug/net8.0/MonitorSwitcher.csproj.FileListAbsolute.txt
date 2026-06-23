@@ -12,3 +12,4 @@ D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0\refint\MonitorSwitcher.dll
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0\MonitorSwitcher.pdb
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0\MonitorSwitcher.genruntimeconfig.cache
 D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0\ref\MonitorSwitcher.dll
+D:\YRJ Developer\MonitorSwitcher\obj\Debug\net8.0\MonitorSwitcher.sourcelink.json
