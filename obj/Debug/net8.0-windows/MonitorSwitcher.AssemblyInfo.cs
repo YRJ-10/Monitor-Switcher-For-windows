@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MonitorSwitcher")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ae20d4abc28e03f79efb33c4f2efbc10f4d53879")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+de758488a5bd1a5995fc0f0b1e7fdb29db241089")]
 [assembly: System.Reflection.AssemblyProductAttribute("MonitorSwitcher")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MonitorSwitcher")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
