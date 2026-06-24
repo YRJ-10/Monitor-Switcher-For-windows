@@ -36,7 +36,7 @@ namespace MonitorSwitcher
         public void RefreshProfiles()
         {
             ProfilesPanel.Children.Clear();
-            string[] configFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.config");
+            string[] configFiles = Directory.GetFiles(AppContext.BaseDirectory, "*.config");
             foreach (string file in configFiles)
             {
                 string profileName = Path.GetFileNameWithoutExtension(file);
@@ -102,7 +102,7 @@ namespace MonitorSwitcher
             string newName = PromptInput("Save Profile", "NewProfile");
             if (!string.IsNullOrWhiteSpace(newName))
             {
-                string newPath = Path.Combine(Directory.GetCurrentDirectory(), newName + ".config");
+                string newPath = Path.Combine(AppContext.BaseDirectory, newName + ".config");
                 try
                 {
                     DisplayManager.SaveProfile(newPath);
