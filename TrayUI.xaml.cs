@@ -119,31 +119,85 @@ namespace MonitorSwitcher
         {
             Window prompt = new Window()
             {
-                Width = 300, Height = 140, Title = title,
+                Width = 340,
+                Height = 190,
+                MinWidth = 340,
+                MinHeight = 190,
+                Title = title,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 WindowStyle = WindowStyle.ToolWindow,
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30)),
-                Topmost = true
+                Topmost = true,
+                ResizeMode = ResizeMode.NoResize
             };
-            System.Windows.Controls.StackPanel panel = new System.Windows.Controls.StackPanel() { Margin = new Thickness(15) };
-            
-            System.Windows.Controls.TextBox textBox = new System.Windows.Controls.TextBox() { Text = defaultText, Margin = new Thickness(0,0,0,15), Padding = new Thickness(5), FontSize = 14 };
+            System.Windows.Controls.Grid panel = new System.Windows.Controls.Grid() { Margin = new Thickness(16) };
+            panel.RowDefinitions.Add(new System.Windows.Controls.RowDefinition() { Height = GridLength.Auto });
+            panel.RowDefinitions.Add(new System.Windows.Controls.RowDefinition() { Height = GridLength.Auto });
+            panel.RowDefinitions.Add(new System.Windows.Controls.RowDefinition() { Height = new GridLength(1, GridUnitType.Star) });
+            panel.RowDefinitions.Add(new System.Windows.Controls.RowDefinition() { Height = GridLength.Auto });
+
+            System.Windows.Controls.TextBlock label = new System.Windows.Controls.TextBlock()
+            {
+                Text = "Enter profile name:",
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White),
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            System.Windows.Controls.Grid.SetRow(label, 0);
+            panel.Children.Add(label);
+
+            System.Windows.Controls.TextBox textBox = new System.Windows.Controls.TextBox()
+            {
+                Text = defaultText,
+                Margin = new Thickness(0, 0, 0, 12),
+                Padding = new Thickness(8, 6, 8, 6),
+                FontSize = 14,
+                MinHeight = 34,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            System.Windows.Controls.Grid.SetRow(textBox, 1);
+            panel.Children.Add(textBox);
+
+            System.Windows.Controls.StackPanel actions = new System.Windows.Controls.StackPanel()
+            {
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+            };
+
             System.Windows.Controls.Button btnOk = new System.Windows.Controls.Button() 
             { 
-                Content = "OK", 
-                Width = 80, 
-                Height = 30, 
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Right, 
+                Content = title.StartsWith("Save", StringComparison.OrdinalIgnoreCase) ? "Save" : "OK",
+                MinWidth = 86,
+                MinHeight = 34,
+                Padding = new Thickness(14, 6, 14, 6),
+                Margin = new Thickness(8, 0, 0, 0),
                 Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60)), 
                 Foreground = System.Windows.Media.Brushes.White,
                 BorderThickness = new Thickness(0)
             };
             btnOk.Click += (s,e) => prompt.DialogResult = true;
-            
-            panel.Children.Add(new System.Windows.Controls.TextBlock() { Text = "Enter profile name:", Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.White), Margin = new Thickness(0,0,0,5) });
-            panel.Children.Add(textBox);
-            panel.Children.Add(btnOk);
+
+            System.Windows.Controls.Button btnCancel = new System.Windows.Controls.Button()
+            {
+                Content = "Cancel",
+                MinWidth = 86,
+                MinHeight = 34,
+                Padding = new Thickness(14, 6, 14, 6),
+                Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(45, 45, 45)),
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderThickness = new Thickness(0)
+            };
+            btnCancel.Click += (s, e) => prompt.DialogResult = false;
+
+            actions.Children.Add(btnCancel);
+            actions.Children.Add(btnOk);
+            System.Windows.Controls.Grid.SetRow(actions, 3);
+            panel.Children.Add(actions);
             prompt.Content = panel;
+            prompt.Loaded += (s, e) =>
+            {
+                textBox.Focus();
+                textBox.SelectAll();
+            };
 
             if (prompt.ShowDialog() == true)
                 return textBox.Text.Trim();

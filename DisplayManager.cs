@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -172,13 +173,13 @@ public class DisplayManager
 
     public static void SaveProfile(string filename)
     {
-        int err = GetDisplayConfigBufferSizes(QDC_ALL_PATHS, out uint pathCount, out uint modeCount);
+        int err = GetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS, out uint pathCount, out uint modeCount);
         if (err != 0) throw new Exception($"GetDisplayConfigBufferSizes failed with code {err}");
 
         var paths = new DISPLAYCONFIG_PATH_INFO[pathCount];
         var modes = new DISPLAYCONFIG_MODE_INFO[modeCount];
 
-        err = QueryDisplayConfig(QDC_ALL_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
+        err = QueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS, ref pathCount, paths, ref modeCount, modes, IntPtr.Zero);
         if (err != 0) throw new Exception($"QueryDisplayConfig failed with code {err}");
 
         // Save sizes and arrays
@@ -198,11 +199,15 @@ public class DisplayManager
     {
         if (!File.Exists(filename))
         {
-            Console.WriteLine($"Profile file not found: {filename}");
-            return;
+            throw new FileNotFoundException("Profile file not found.", filename);
         }
 
         using var fs = new FileStream(filename, FileMode.Open);
+        if (fs.Length < sizeof(uint) * 2)
+        {
+            throw new InvalidDataException($"Profile file is empty or corrupted: {filename}");
+        }
+
         using var br = new BinaryReader(fs);
 
         uint pathCount = br.ReadUInt32();
@@ -215,7 +220,7 @@ public class DisplayManager
         int err = SetDisplayConfig(pathCount, paths, modeCount, modes, flags);
         if (err != 0)
         {
-            Console.WriteLine($"SetDisplayConfig failed with code {err}. Make sure the monitors connected match the profile.");
+            throw new Win32Exception(err, $"SetDisplayConfig failed with code {err}. Make sure the connected monitors match this profile.");
         }
         else
         {
