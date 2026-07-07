@@ -1,10 +1,13 @@
 using System;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace MonitorSwitcher;
 
 static class Program
 {
+    private const string SingleInstanceMutexName = @"Local\MonitorSwitcher.TrayApp";
+
     [STAThread]
     static void Main(string[] args)
     {
@@ -33,6 +36,12 @@ static class Program
             {
                 Console.WriteLine($"Error: {ex.Message}");
             }
+            return;
+        }
+
+        using Mutex singleInstanceMutex = new Mutex(true, SingleInstanceMutexName, out bool createdNew);
+        if (!createdNew)
+        {
             return;
         }
 

@@ -8,6 +8,7 @@ public class TrayApplicationContext : ApplicationContext
 {
     private NotifyIcon trayIcon;
     private TrayUI trayUI;
+    private LocalApiServer? localApiServer;
 
     public TrayApplicationContext()
     {
@@ -27,6 +28,16 @@ public class TrayApplicationContext : ApplicationContext
         };
 
         trayIcon.MouseClick += TrayIcon_MouseClick;
+
+        try
+        {
+            localApiServer = new LocalApiServer();
+            localApiServer.Start();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Local API failed to start: {ex.Message}", "Monitor Switcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private void TrayIcon_MouseClick(object? sender, MouseEventArgs e)
@@ -85,6 +96,17 @@ public class TrayApplicationContext : ApplicationContext
 
         IntPtr hIcon = bmp.GetHicon();
         return Icon.FromHandle(hIcon);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            localApiServer?.Dispose();
+            trayIcon.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
 
