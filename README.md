@@ -1,6 +1,6 @@
 # MonitorSwitcher
 
-MonitorSwitcher adalah aplikasi Windows untuk menyimpan dan mengganti profil konfigurasi monitor dengan cepat. Aplikasi ini berjalan dari system tray, lalu membaca profil monitor dari file `.config` yang berada di folder aplikasi.
+MonitorSwitcher adalah aplikasi Windows untuk menyimpan dan mengganti profil konfigurasi monitor dengan cepat. Aplikasi ini berjalan dari system tray dan menyimpan profil logis dalam file `.profile.json`.
 
 Cocok untuk setup multi-monitor yang sering berubah, misalnya:
 
@@ -69,8 +69,20 @@ MonitorSwitcher.exe load "NamaProfil"
 Perintah tersebut akan memakai file:
 
 ```text
-NamaProfil.config
+NamaProfil.profile.json
 ```
+
+Profil binary `.config` versi lama tetap dapat dibaca sebagai fallback.
+
+## Local API
+
+API aktif otomatis bersama tray app dan hanya listen di `127.0.0.1:47777`.
+
+```powershell
+curl http://127.0.0.1:47777/profile/3
+```
+
+Method `GET` dan `POST` didukung. Nomor profil mengikuti awalan nama file, sehingga endpoint Android tidak berubah ketika nama lengkap profil berubah.
 
 ## Teknis
 
@@ -79,16 +91,20 @@ NamaProfil.config
 - Target: `net8.0-windows`
 - UI: Windows Forms system tray + WPF popup
 - API monitor: Windows Display Configuration API melalui `User32.dll`
-- File profil: binary `.config` berisi data konfigurasi display dari Windows
+- File profil: JSON berisi identitas monitor dan susunan display logis
+- Resolver: membaca ulang ID/path display Windows setiap profil diterapkan
+- API lokal: `http://127.0.0.1:47777/profile/{id}`
 
 File penting:
 
 - `Program.cs` - entry point aplikasi dan mode CLI
 - `TrayApplicationContext.cs` - ikon dan behavior system tray
 - `TrayUI.xaml` / `TrayUI.xaml.cs` - tampilan popup tray
-- `DisplayManager.cs` - logic save/load konfigurasi monitor
-- `*.config` - profil monitor yang tersimpan
+- `LogicalProfileCapture.cs` - menyimpan kondisi monitor sebagai profil logis
+- `DisplayTopologyResolver.cs` - memetakan monitor ke enumerasi Windows terbaru
+- `LogicalProfileApplier.cs` - memvalidasi dan menerapkan profil
+- `*.profile.json` - profil monitor yang tersimpan
 
 ## Catatan
 
-Profil monitor bergantung pada monitor yang terhubung. Jika monitor yang sedang tersambung berbeda dari saat profil dibuat, proses load profil bisa gagal atau hasilnya tidak sesuai.
+Profil dibangun ulang memakai enumerasi Windows terbaru saat dipanggil. Monitor yang termasuk dalam profil tetap harus terdeteksi Windows.

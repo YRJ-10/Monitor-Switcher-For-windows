@@ -36,10 +36,11 @@ namespace MonitorSwitcher
         public void RefreshProfiles()
         {
             ProfilesPanel.Children.Clear();
-            string[] configFiles = Directory.GetFiles(AppContext.BaseDirectory, "*.config");
-            foreach (string file in configFiles)
+            IReadOnlyList<ProfileEntry> profiles = ProfileCatalog.GetProfiles(AppContext.BaseDirectory);
+            foreach (ProfileEntry profile in profiles)
             {
-                string profileName = Path.GetFileNameWithoutExtension(file);
+                string file = profile.FilePath;
+                string profileName = profile.Name;
                 
                 System.Windows.Controls.Grid grid = new System.Windows.Controls.Grid() { Margin = new Thickness(0, 2, 0, 2) };
                 grid.ColumnDefinitions.Add(new System.Windows.Controls.ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
@@ -56,12 +57,12 @@ namespace MonitorSwitcher
                 grid.Children.Add(btnLoad);
 
                 System.Windows.Controls.Button btnEdit = new System.Windows.Controls.Button() { Content = "✏️", ToolTip = "Rename", Width = 35 };
-                btnEdit.Click += (s, e) => RenameProfile(file, profileName);
+                btnEdit.Click += (s, e) => RenameProfile(profile);
                 System.Windows.Controls.Grid.SetColumn(btnEdit, 1);
                 grid.Children.Add(btnEdit);
 
                 System.Windows.Controls.Button btnDelete = new System.Windows.Controls.Button() { Content = "🗑️", ToolTip = "Delete", Width = 35, Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.LightCoral) };
-                btnDelete.Click += (s, e) => DeleteProfile(file);
+                btnDelete.Click += (s, e) => DeleteProfile(profile);
                 System.Windows.Controls.Grid.SetColumn(btnDelete, 2);
                 grid.Children.Add(btnDelete);
 
@@ -74,25 +75,45 @@ namespace MonitorSwitcher
             }
         }
 
-        private void RenameProfile(string filePath, string oldName)
+        private void RenameProfile(ProfileEntry profile)
         {
-            string newName = PromptInput("Rename Profile", oldName);
-            if (!string.IsNullOrWhiteSpace(newName) && newName != oldName)
+            string newName = PromptInput("Rename Profile", profile.Name);
+            if (!string.IsNullOrWhiteSpace(newName) && newName != profile.Name)
             {
-                string newPath = Path.Combine(Path.GetDirectoryName(filePath)!, newName + ".config");
+                string directory = Path.GetDirectoryName(profile.FilePath)!;
+                string newPath = ProfileCatalog.GetProfilePath(directory, newName, profile.IsLogical);
                 if (!File.Exists(newPath))
                 {
-                    File.Move(filePath, newPath);
+                    File.Move(profile.FilePath, newPath);
+
+                    if (profile.IsLogical)
+                    {
+                        string oldLegacyPath = ProfileCatalog.GetLegacyCompanionPath(profile.FilePath);
+                        string newLegacyPath = ProfileCatalog.GetProfilePath(directory, newName, logical: false);
+                        if (File.Exists(oldLegacyPath) && !File.Exists(newLegacyPath))
+                        {
+                            File.Move(oldLegacyPath, newLegacyPath);
+                        }
+                    }
+
                     RefreshProfiles();
                 }
             }
         }
 
-        private void DeleteProfile(string filePath)
+        private void DeleteProfile(ProfileEntry profile)
         {
             if (System.Windows.MessageBox.Show("Are you sure you want to delete this profile?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                File.Delete(filePath);
+                File.Delete(profile.FilePath);
+                if (profile.IsLogical)
+                {
+                    string legacyPath = ProfileCatalog.GetLegacyCompanionPath(profile.FilePath);
+                    if (File.Exists(legacyPath))
+                    {
+                        File.Delete(legacyPath);
+                    }
+                }
                 RefreshProfiles();
             }
         }
@@ -102,10 +123,11 @@ namespace MonitorSwitcher
             string newName = PromptInput("Save Profile", "NewProfile");
             if (!string.IsNullOrWhiteSpace(newName))
             {
-                string newPath = Path.Combine(AppContext.BaseDirectory, newName + ".config");
+                string newPath = ProfileCatalog.GetProfilePath(AppContext.BaseDirectory, newName, logical: true);
                 try
                 {
-                    DisplayManager.SaveProfile(newPath);
+                    LogicalDisplayProfile profile = LogicalProfileCapture.CaptureCurrent(newName);
+                    LogicalProfileStore.Save(newPath, profile);
                     RefreshProfiles();
                 }
                 catch (Exception ex)

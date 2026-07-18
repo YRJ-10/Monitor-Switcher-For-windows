@@ -202,6 +202,12 @@ public class DisplayManager
             throw new FileNotFoundException("Profile file not found.", filename);
         }
 
+        if (filename.EndsWith(LogicalProfileStore.FileExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            LogicalProfileApplier.Apply(LogicalProfileStore.Load(filename));
+            return;
+        }
+
         using var fs = new FileStream(filename, FileMode.Open);
         if (fs.Length < sizeof(uint) * 2)
         {

@@ -154,21 +154,7 @@ public sealed class LocalApiServer : IDisposable
 
     private static string ResolveProfileFile(string profileId)
     {
-        string baseDirectory = AppContext.BaseDirectory;
-        string exactPath = Path.Combine(baseDirectory, profileId + ".config");
-        if (File.Exists(exactPath))
-        {
-            return exactPath;
-        }
-
-        string[] matches = Directory.GetFiles(baseDirectory, profileId + ".*.config");
-        if (matches.Length > 0)
-        {
-            Array.Sort(matches, StringComparer.OrdinalIgnoreCase);
-            return matches[0];
-        }
-
-        throw new FileNotFoundException($"Profile '{profileId}' was not found.", exactPath);
+        return ProfileCatalog.ResolveProfileFile(profileId, AppContext.BaseDirectory);
     }
 
     private static async Task WriteJsonAsync(NetworkStream stream, HttpStatusCode statusCode, object response, CancellationToken token)
