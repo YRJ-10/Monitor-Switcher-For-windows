@@ -1,11 +1,41 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Windows.Interop;
+using Microsoft.Win32;
 
 namespace MonitorSwitcher;
 
 public class TrayApplicationContext : ApplicationContext
 {
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOZORDER = 0x0004;
+    private const uint SWP_NOACTIVATE = 0x0010;
+    private const int PopupMargin = 10;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int X,
+        int Y,
+        int cx,
+        int cy,
+        uint uFlags);
+
     private NotifyIcon trayIcon;
     private TrayUI trayUI;
     private LocalApiServer? localApiServer;
@@ -28,6 +58,7 @@ public class TrayApplicationContext : ApplicationContext
         };
 
         trayIcon.MouseClick += TrayIcon_MouseClick;
+        SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
         try
         {
@@ -44,25 +75,67 @@ public class TrayApplicationContext : ApplicationContext
     {
         if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
         {
-            if (trayUI.IsVisible)
+            Screen primaryScreen = Screen.PrimaryScreen ?? Screen.FromPoint(Cursor.Position);
+            if (trayUI.IsVisible && IsWindowOnScreen(primaryScreen))
             {
                 trayUI.Hide();
             }
             else
             {
                 trayUI.RefreshProfiles();
-                
-                // Position the window near the tray
-                var cursorPosition = Cursor.Position;
-                var screen = Screen.FromPoint(cursorPosition);
-                
-                trayUI.Left = screen.WorkingArea.Right - trayUI.Width - 10;
-                trayUI.Top = screen.WorkingArea.Bottom - trayUI.Height - 10;
-                
-                trayUI.Show();
+                PositionOnPrimaryScreen(primaryScreen);
+                if (!trayUI.IsVisible)
+                {
+                    trayUI.Show();
+                }
                 trayUI.Activate();
             }
         }
+    }
+
+    private void PositionOnPrimaryScreen(Screen primaryScreen)
+    {
+        IntPtr windowHandle = new WindowInteropHelper(trayUI).EnsureHandle();
+        if (!GetWindowRect(windowHandle, out RECT windowRect))
+        {
+            return;
+        }
+
+        int width = windowRect.Right - windowRect.Left;
+        int height = windowRect.Bottom - windowRect.Top;
+        Rectangle workingArea = primaryScreen.WorkingArea;
+        int x = Math.Max(workingArea.Left, workingArea.Right - width - PopupMargin);
+        int y = Math.Max(workingArea.Top, workingArea.Bottom - height - PopupMargin);
+
+        SetWindowPos(
+            windowHandle,
+            IntPtr.Zero,
+            x,
+            y,
+            0,
+            0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    private bool IsWindowOnScreen(Screen screen)
+    {
+        IntPtr windowHandle = new WindowInteropHelper(trayUI).EnsureHandle();
+        if (!GetWindowRect(windowHandle, out RECT windowRect))
+        {
+            return false;
+        }
+
+        Rectangle windowBounds = Rectangle.FromLTRB(
+            windowRect.Left,
+            windowRect.Top,
+            windowRect.Right,
+            windowRect.Bottom);
+        return screen.WorkingArea.IntersectsWith(windowBounds);
+    }
+
+    private void SystemEvents_DisplaySettingsChanged(object? sender, EventArgs e)
+    {
+        trayUI.Dispatcher.BeginInvoke(() => trayUI.Hide());
     }
 
     private Icon CreateMonitorIcon()
@@ -102,6 +175,7 @@ public class TrayApplicationContext : ApplicationContext
     {
         if (disposing)
         {
+            SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
             localApiServer?.Dispose();
             trayIcon.Dispose();
         }
