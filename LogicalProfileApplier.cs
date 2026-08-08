@@ -138,6 +138,10 @@ public static class LogicalProfileApplier
                     Numerator = match.Requested.RefreshRate.Numerator,
                     Denominator = match.Requested.RefreshRate.Denominator
                 };
+                targetMode.targetVideoSignalInfo.pixelRate = 0;
+                targetMode.targetVideoSignalInfo.hSyncFreq.Numerator = 0;
+                targetMode.targetVideoSignalInfo.hSyncFreq.Denominator = 0;
+                targetMode.targetVideoSignalInfo.vSyncFreq = path.targetInfo.refreshRate;
             }
 
             modes.Add(new DisplayManager.DISPLAYCONFIG_MODE_INFO
